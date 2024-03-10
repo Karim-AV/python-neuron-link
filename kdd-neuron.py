@@ -47,5 +47,5 @@ def change_label(df):
     df.attack.replace(['ipsweep','mscan','nmap','portsweep','saint','satan'],'Probe',inplace=True)
     df.attack.replace(['buffer_overflow','loadmodule','perl','ps','rootkit','sqlattack','xterm'],'U2R',inplace=True)
 change_label(df)
-df.attack.unique()
+print(df.attack.unique())
 print(df.attack.value_counts())
