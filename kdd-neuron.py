@@ -1,4 +1,5 @@
 #Import Libraries
+# import fig
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -7,6 +8,9 @@ import matplotlib.pyplot as plt
 import plotly.express as px
 
 import warnings
+
+from rich.jupyter import display
+
 warnings.filterwarnings('ignore')
 
 import lime
@@ -18,6 +22,7 @@ import plotly as py
 import plotly.express as px
 # init_notebook_mode(connected=True)
 import plotly.graph_objs as go
+# plot(fig)
 
 #Import Dataset
 df = pd.read_csv("KDDTest.csv")
@@ -32,4 +37,6 @@ columns = (['duration','protocol_type','service','flag','src_bytes','dst_bytes',
 df.columns = columns
 df.head()
 df.info()
-df.describe(include='all').T
+print(df.describe())
+df = df.drop('level', axis=1)
+df['attack'].unique()
