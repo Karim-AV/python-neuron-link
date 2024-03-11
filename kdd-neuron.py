@@ -20,9 +20,7 @@ import shap
 from plotly.offline import init_notebook_mode, iplot, plot
 import plotly as py
 import plotly.express as px
-# init_notebook_mode(connected=True)
 import plotly.graph_objs as go
-# plot(fig)
 
 #Import Dataset
 df = pd.read_csv("KDDTest.csv")
@@ -40,6 +38,10 @@ df.info()
 print(df.describe())
 df = df.drop('level', axis=1)
 print(df.attack.unique())
+
+plt.figure(figsize=(50,50))
+sns.countplot(x='attack',data=df)
+plt.show()
 # changing attack labels to their respective attack class
 def change_label(df):
     df.attack.replace(['apache2','back','land','neptune','mailbomb','pod','processtable','smurf','teardrop','udpstorm','worm'],'Dos',inplace=True)
@@ -49,3 +51,7 @@ def change_label(df):
 change_label(df)
 print(df.attack.unique())
 print(df.attack.value_counts())
+
+plt.figure(figsize=(60,60))
+sns.countplot(x='attack',data=df)
+plt.show()
