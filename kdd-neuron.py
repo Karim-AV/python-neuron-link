@@ -1,26 +1,12 @@
 #Import Libraries
-# import fig
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import accuracy_score
+from sklearn.neural_network import MLPClassifier
+from sklearn import preprocessing
 import numpy as np
 import pandas as pd
-import seaborn as sns
-import joblib
 import matplotlib.pyplot as plt
-import plotly.express as px
-
-import warnings
-
-from rich.jupyter import display
-
-warnings.filterwarnings('ignore')
-
-import lime
-import lime.lime_tabular
-import shap
-
-from plotly.offline import init_notebook_mode, iplot, plot
-import plotly as py
-import plotly.express as px
-import plotly.graph_objs as go
 
 #Import Dataset
 df = pd.read_csv("KDDTest.csv")
@@ -38,20 +24,36 @@ df.info()
 print(df.describe())
 df = df.drop('level', axis=1)
 print(df.attack.unique())
+display(df.describe())
 
-plt.figure(figsize=(50,50))
-sns.countplot(x='attack',data=df)
-plt.show()
-# changing attack labels to their respective attack class
-def change_label(df):
-    df.attack.replace(['apache2','back','land','neptune','mailbomb','pod','processtable','smurf','teardrop','udpstorm','worm'],'Dos',inplace=True)
-    df.attack.replace(['ftp_write','guess_passwd','httptunnel','imap','multihop','named','phf','sendmail','snmpgetattack','snmpguess','spy','warezclient','warezmaster','xlock','xsnoop'],'R2L',inplace=True)
-    df.attack.replace(['ipsweep','mscan','nmap','portsweep','saint','satan'],'Probe',inplace=True)
-    df.attack.replace(['buffer_overflow','loadmodule','perl','ps','rootkit','sqlattack','xterm'],'U2R',inplace=True)
-change_label(df)
-print(df.attack.unique())
-print(df.attack.value_counts())
+# Применение LabelEncoder ко всем категориальным столбцам
+label_encoder = preprocessing.LabelEncoder()
+df_encoded = df.apply(label_encoder.fit_transform)
 
-plt.figure(figsize=(60,60))
-sns.countplot(x='attack',data=df)
+#Train-Test Split
+X = df_encoded.drop(labels=['attack'], axis=1)
+y = df_encoded[['attack']]
+print('X_train has shape:', X.shape, '\ny_train has shape:', y.shape)
+
+# splitting the dataset 80% for training and 20% testing
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random_state=42)
+
+# Масштабирование признаков
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+# Обучение модели нейронной сети
+mlp = MLPClassifier(hidden_layer_sizes=(100, 50, 22), max_iter=100, random_state=42)
+mlp.fit(X_train_scaled, y_train)
+
+# Предсказание на тестовом наборе данных
+y_pred = mlp.predict(X_test_scaled)
+# Вычисление точности
+accuracy = accuracy_score(y_test, y_pred)
+print("Accuracy:", accuracy)
+
+# задача 1 Вычисление точности на каждой эпохе
+
+# задача 2 преза по каждому блоку
 plt.show()

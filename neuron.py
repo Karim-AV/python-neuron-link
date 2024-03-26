@@ -1,64 +1,58 @@
-import json
 import tensorflow as tf
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from tensorflow.keras import layers
 from tensorflow.keras.callbacks import TensorBoard
-from scapy.layers.inet import IP
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.metrics import classification_report
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Dropout
 
-# Load the  file
-with open('atack.json', 'r') as f:
-    data = json.load(f)
+#Import Dataset
+df = pd.read_csv("KDDTest.csv")
 
-# Extract features and create 'target' column
+# Определение признаков и целевой переменной
 
-for packet in packets:
-    features = {
-        'src_ip': packet[IP].src,
-        'dest_ip': packet[IP].dst,
-        'protocol': packet[IP].proto,
-        'length': len(packet),
-    }
-
-    # Assuming you have a threshold for the 'target' column
-    data.append({'features': features, 'target': 1 if len(packet) > threshold else 0})
-
-# Convert data to DataFrame
-df = pd.DataFrame(data)
-
-# Prepare data for model training
-X = pd.DataFrame(df['features'].tolist())
-y = df['target']
-
-# Split the data into training and testing sets
+# Разделение данных на обучающий и тестовый наборы
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# Define neural network architecture - a sequence of layers
-model = tf.keras.Sequential([
-    layers.Dense(128, activation="relu", input_shape=(X_train.shape[1],)),
-    layers.Dense(64, activation="relu"),
-    layers.Dense(32, activation="relu"),
-    layers.Dense(1, activation="sigmoid"),
+# Кодирование категориальных признаков
+encoder = LabelEncoder()
+X_train['protocol_type'] = encoder.fit_transform(X_train['protocol_type'])
+X_train['service'] = encoder.fit_transform(X_train['service'])
+X_train['flag'] = encoder.fit_transform(X_train['flag'])
+
+X_test['protocol_type'] = encoder.transform(X_test['protocol_type'])
+X_test['service'] = encoder.transform(X_test['service'])
+X_test['flag'] = encoder.transform(X_test['flag'])
+
+# Масштабирование признаков
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+# Создание модели MLP
+model = Sequential([
+    Dense(128, input_shape=(X_train_scaled.shape[1],), activation='relu'),
+    Dropout(0.5),
+    Dense(64, activation='relu'),
+    Dropout(0.5),
+    Dense(1, activation='sigmoid')
 ])
 
-# Visualization of the neural network in TensorFlow
-tensorboard = TensorBoard(log_dir="logs")
+# Компиляция модели
+model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 
-# Compile the model
-model.compile(loss="binary_crossentropy", optimizer="adam", metrics=["accuracy"])
+# Обучение модели
+history = model.fit(X_train_scaled, y_train, epochs=10, batch_size=64, validation_split=0.2, verbose=1)
 
-# Train the model
-model.fit(X_train, y_train, epochs=10, batch_size=32, callbacks=[tensorboard])
+# Оценка модели
+loss, accuracy = model.evaluate(X_test_scaled, y_test)
+print(f'Test Accuracy: {accuracy}')
 
-# Evaluate the model
-loss, accuracy = model.evaluate(X_test, y_test)
-print(f"Loss: {loss}")
-print(f"Accuracy: {accuracy}")
+# Предсказание на тестовом наборе
+y_pred = model.predict_classes(X_test_scaled)
 
-# Make predictions
-predictions = model.predict(X_test)
-for prediction in predictions:
-    if prediction > 0.5:
-        print("Attack detected")
-    else:
-        print("Normal traffic")
+# Вывод отчета о классификации
+print(classification_report(y_test, y_pred))
